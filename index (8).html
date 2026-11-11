@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<meta name="description" content="MDS Motion Leads: find leads, build connections, close clients.">
+<title>MDS Motion Leads</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#0b1220;--surface:#131c2e;--card:#1a2540;--line:#26324f;--text:#e8edf7;--muted:#8d9bb8;--accent:#3b82f6;--good:#22c55e;--warn:#f59e0b;--bad:#ef4444;}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);padding-bottom:calc(72px + env(safe-area-inset-bottom));-webkit-font-smoothing:antialiased}
+header.top{position:sticky;top:0;background:var(--surface);padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top));border-bottom:1px solid var(--line);z-index:5}
+.brand{font-weight:700;letter-spacing:.3px}.mono{color:var(--accent)}
+main{padding:16px;max-width:720px;margin:0 auto}
+nav.bottom{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:5}
+nav.bottom button{flex:1;background:none;border:0;color:var(--muted);padding:14px 0;font-size:15px}
+nav.bottom button.on{color:var(--text);box-shadow:inset 0 2px 0 var(--accent)}
+h1{font-size:20px;margin:0 0 10px}h2{font-size:18px;margin:18px 0 8px}
+.hero{margin:6px 0 14px}
+.btn{background:var(--accent);color:#fff;border:0;border-radius:12px;padding:12px 16px;font-size:15px;font-weight:600;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.btn.danger{background:var(--bad)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.stat span{display:block;color:var(--muted);font-size:13px}.stat b{font-size:24px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0;cursor:pointer}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.muted{color:var(--muted);font-size:14px}.small{font-size:13px;margin-top:6px}
+.tag{background:var(--line);border-radius:999px;padding:3px 10px;font-size:12px}
+.pri{font-size:12px;border-radius:999px;padding:3px 10px;font-weight:600}
+.pri.high{background:rgba(34,197,94,.18);color:var(--good)}
+.pri.medium{background:rgba(245,158,11,.18);color:var(--warn)}
+.pri.low{background:rgba(239,68,68,.15);color:var(--bad)}
+input,select,textarea{width:100%;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:11px;font-size:16px;margin:4px 0 10px;font-family:inherit}
+label{display:block;font-size:14px;color:var(--muted)}
+label.check{display:flex;gap:8px;align-items:center;color:var(--text)}
+label.check input{width:auto;margin:0}
+fieldset{border:1px solid var(--line);border-radius:14px;padding:12px;margin:12px 0}
+legend{color:var(--accent);font-weight:600;padding:0 6px}
+.chips{display:flex;flex-wrap:wrap;gap:14px}
+.preview,.score{background:var(--surface);border-radius:12px;padding:12px;margin-top:8px;font-size:14px}
+.preview ul,.reasons{padding-left:0;list-style:none;margin:8px 0 0}
+.preview li,.reasons li{margin:5px 0}
+.pos{color:var(--good)}.neg{color:var(--bad)}.zero{color:var(--muted)}
+.errors{background:rgba(239,68,68,.12);border:1px solid var(--bad);border-radius:12px;padding:10px 14px;margin:10px 0}
+.errors p{margin:4px 0}
+.actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
+.filters{display:grid;gap:4px}
+.empty{text-align:center;color:var(--muted);padding:30px 14px;border:1px dashed var(--line);border-radius:14px;margin:12px 0}
+.note{color:var(--muted);font-size:13px}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:8px 12px;font-size:14px}
+.kv span{color:var(--muted)}
+a{color:var(--accent);word-break:break-all}
+select[data-action]{margin-top:0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:90px;background:var(--card);border:1px solid var(--line);padding:10px 16px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.4);max-width:90%}
+@media (max-width:420px){.row2{grid-template-columns:1fr}.kv{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="top"><div class="brand"><span class="mono">MDS</span> Motion Leads</div></header>
+<main id="view"></main>
+<nav class="bottom">
+  <button data-go="home">Home</button>
+  <button data-go="leads">Leads</button>
+  <button data-go="add">+ Add lead</button>
+</nav>
+<div id="toast" class="toast" hidden></div>
+<script>
+/* MDS Motion Leads - pure logic (no DOM). Runs in the browser and in Node tests. */
+(function (global) {
+  'use strict';
+
+  var STATUSES = [
+    'New', 'Qualified', 'Contacted', 'Replied', 'Call Booked', 'Proposal Sent',
+    'Negotiation', 'Won', 'Lost', 'Not Interested', 'Follow-up Later'
+  ];
+  var QUALIFIED_OR_LATER = ['Qualified', 'Contacted', 'Replied', 'Call Booked', 'Proposal Sent', 'Negotiation', 'Won'];
+
+  // Keywords come from the playbook (Parts 03, 04, 04B). Matching is whole-word and case-insensitive.
+  // Field weights: job title 3, company 2, bio or keywords 1.
+  var NICHES = [
+    { name: 'Real Estate Agent', keywords: ['real estate agent', 'estate agent', 'property agent', 'listing agent', 'sales agent'] },
+    { name: 'Realtor', keywords: ['realtor', 'realtors'] },
+    { name: 'Property Broker', keywords: ['property broker', 'real estate broker', 'brokerage'] },
+    { name: 'Real Estate Agency Owner', keywords: ['agency owner', 'broker owner', 'brokerage owner', 'agency founder', 'founder'] },
+    { name: 'Real Estate Coach', keywords: ['real estate coach', 'realtor coach', 'real estate mentor', 'coach', 'mentor'] },
+    { name: 'Real Estate Podcaster', keywords: ['podcast', 'podcaster', 'podcast host'] },
+    { name: 'Property Developer', keywords: ['property developer', 'off plan developer', 'off-plan developer', 'developer', 'developments'] },
+    { name: 'Mortgage Broker', keywords: ['mortgage broker', 'mortgage advisor', 'mortgage', 'home loan'] },
+    { name: 'Interior Designer', keywords: ['interior designer', 'interior design', 'interior designers'] },
+    { name: 'Home Stager', keywords: ['home stager', 'home staging', 'staging expert', 'staged home'] },
+    { name: 'Property Photographer', keywords: ['property photographer', 'real estate photographer', 'property videographer', 'real estate videographer', 'photographer', 'videographer'] },
+    { name: 'Property Manager', keywords: ['property manager', 'property management', 'short term rental', 'short-term rental', 'vacation rental', 'airbnb host', 'airbnb'] },
+    { name: 'Other', keywords: [] }
+  ];
+
+  function join() {
+    return Array.prototype.slice.call(arguments).filter(Boolean).map(String).join(' ').toLowerCase();
+  }
+  function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  function hasPhrase(text, phrase) {
+    return new RegExp('(^|[^a-z])' + escapeRe(phrase) + '([^a-z]|$)').test(text);
+  }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function dateKeyOf(date) {
+    var d = date instanceof Date ? date : new Date(date);
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+  function todayKey(now) { return dateKeyOf(now || new Date()); }
+
+  function suggestNiche(lead) {
+    lead = lead || {};
+    var fields = [
+      { w: 3, text: join(lead.jobTitle, lead.linkedinJobTitle) },
+      { w: 2, text: join(lead.company, lead.linkedinCompany) },
+      { w: 1, text: join(lead.bio, lead.keywords) }
+    ];
+    var best = { niche: 'Other', score: 0, matches: [] };
+    NICHES.forEach(function (n) {
+      var score = 0, matches = [];
+      n.keywords.forEach(function (kw) {
+        var w = 0;
+        fields.forEach(function (f) { if (f.text && hasPhrase(f.text, kw) && f.w > w) w = f.w; });
+        if (w) { score += w; matches.push(kw); }
+      });
+      if (score > best.score) best = { niche: n.name, score: score, matches: matches };
+    });
+    best.confidence = best.score >= 3 ? 'High' : best.score >= 1 ? 'Medium' : 'Low';
+    return best;
+  }
+
+  // Scoring criteria from the playbook (Part 01 ideal-client signals, Part 03 green/red flags).
+  // Max 100 points. Red flags subtract points and each one is listed with its reason.
+  function scoreLead(lead) {
+    var reasons = [];
+    var pts = 0;
+    function add(p, text) { pts += p; reasons.push({ points: p, text: text }); }
+
+    var f = lead.followers;
+    if (f == null) add(0, 'Followers not entered');
+    else if (f >= 2000 && f <= 100000) add(20, 'Followers (' + f.toLocaleString('en-US') + ') are in the 2K to 100K range');
+    else add(0, 'Followers (' + f.toLocaleString('en-US') + ') are outside the 2K to 100K range');
+
+    if (lead.activeLast30 === 'yes') add(20, 'Posted in the last 30 days');
+    else if (lead.activeLast30 === 'no') add(-20, 'No post in the last 30 days (red flag)');
+    else add(0, 'Activity in the last 30 days not checked');
+
+    if (lead.reelsStatus === 'weak') add(20, 'Has reels that need editing improvement');
+    else if (lead.reelsStatus === 'none') add(10, 'Posts few or no reels (consistency gap)');
+    else if (lead.reelsStatus === 'good') add(-15, 'Reels already look professional (red flag)');
+    else add(0, 'Reel quality not checked');
+
+    if (lead.hasListings === 'yes') add(15, 'Real listings or properties are visible');
+    else if (lead.hasListings === 'no') add(-10, 'No real listings visible (red flag)');
+    else add(0, 'Listings not checked');
+
+    var publicContact = !!(lead.businessEmail || lead.website || lead.otherContact || (lead.whatsappPublic && lead.whatsappNumber));
+    if (publicContact) add(15, 'Public business contact available');
+    else add(0, 'No public business contact yet');
+
+    if (lead.isPrivate) add(-25, 'Private account (red flag)');
+
+    var score = Math.max(0, Math.min(100, pts));
+    var priority = score >= 60 ? 'High' : score >= 35 ? 'Medium' : 'Low';
+    return { score: score, priority: priority, reasons: reasons };
+  }
+
+  function normalizeHandle(h) {
+    return String(h || '').trim().toLowerCase().replace(/^@/, '').replace(/\s+/g, '');
+  }
+  function normalizeUrl(u) {
+    return String(u || '').trim().toLowerCase()
+      .replace(/^https?:\/\//, '').replace(/^www\./, '')
+      .split(/[?#]/)[0].replace(/\/+$/, '');
+  }
+  function lastSegment(u) {
+    var parts = normalizeUrl(u).split('/').filter(Boolean);
+    return parts.length ? parts[parts.length - 1] : '';
+  }
+  function igHandle(lead) {
+    return normalizeHandle(lead.igUsername) || normalizeHandle(lastSegment(lead.igUrl));
+  }
+
+  function normalizeLead(raw, existing, nowIso) {
+    raw = raw || {};
+    existing = existing || {};
+    var now = nowIso || new Date().toISOString();
+    function s(v) { return v == null ? '' : String(v).trim(); }
+
+    var fRaw = s(raw.followers).replace(/[,\s]/g, '').toLowerCase();
+    var followers = null;
+    if (fRaw !== '') {
+      followers = /k$/.test(fRaw) ? Number(fRaw.slice(0, -1)) * 1000 : Number(fRaw);
+    }
+
+    var foundOn = Array.isArray(raw.foundOn) ? raw.foundOn.slice() : (raw.foundOn ? [raw.foundOn] : []);
+
+    var lead = Object.assign({}, existing, {
+      id: existing.id || newId(),
+      createdAt: existing.createdAt || now,
+      updatedAt: now,
+      archived: !!existing.archived,
+      name: s(raw.name),
+      company: s(raw.company),
+      country: s(raw.country),
+      city: s(raw.city),
+      timezone: s(raw.timezone),
+      jobTitle: s(raw.jobTitle),
+      bio: s(raw.bio),
+      keywords: s(raw.keywords),
+      followers: followers,
+      website: s(raw.website),
+      foundOn: foundOn,
+      igUsername: normalizeHandle(raw.igUsername),
+      igUrl: s(raw.igUrl),
+      linkedinUrl: s(raw.linkedinUrl),
+      linkedinJobTitle: s(raw.linkedinJobTitle),
+      linkedinCompany: s(raw.linkedinCompany),
+      whatsappNumber: s(raw.whatsappNumber).replace(/\D/g, ''),
+      whatsappPublic: !!raw.whatsappPublic,
+      businessEmail: s(raw.businessEmail).toLowerCase(),
+      otherContact: s(raw.otherContact),
+      activeLast30: s(raw.activeLast30) || 'unknown',
+      reelsStatus: s(raw.reelsStatus) || 'unknown',
+      hasListings: s(raw.hasListings) || 'unknown',
+      isPrivate: !!raw.isPrivate,
+      status: STATUSES.indexOf(raw.status) >= 0 ? raw.status : (existing.status || 'New'),
+      nextAction: s(raw.nextAction),
+      source: s(raw.source),
+      notes: s(raw.notes)
+    });
+
+    var sug = suggestNiche(lead);
+    lead.nicheSuggested = sug.niche;
+    lead.niche = s(raw.niche) || sug.niche;
+    return lead;
+  }
+
+  function validateLead(lead) {
+    var errs = [];
+    if (!lead.name) errs.push('Full name is required.');
+
+    var hasIdentifier = [lead.igUsername, lead.igUrl, lead.linkedinUrl, lead.businessEmail,
+      lead.website, lead.whatsappNumber, lead.otherContact].some(Boolean);
+    if (!hasIdentifier) {
+      errs.push('Add at least one profile link or contact (Instagram, LinkedIn, email, website, WhatsApp or other).');
+    }
+    if (lead.businessEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lead.businessEmail)) {
+      errs.push('Business email looks invalid.');
+    }
+    [['website', 'Website'], ['igUrl', 'Instagram URL'], ['linkedinUrl', 'LinkedIn URL']].forEach(function (pair) {
+      var v = lead[pair[0]];
+      if (v && v.indexOf('.') < 0) errs.push(pair[1] + ' looks invalid.');
+    });
+    if (lead.followers !== null && (!isFinite(lead.followers) || lead.followers < 0)) {
+      errs.push('Followers must be a positive number, for example 12000 or 12k.');
+    }
+    if (lead.whatsappNumber && lead.whatsappNumber.length < 7) {
+      errs.push('WhatsApp number looks too short. Include the country code.');
+    }
+    return errs;
+  }
+
+  function findDuplicates(lead, leads) {
+    var mine = { ig: igHandle(lead), li: normalizeUrl(lead.linkedinUrl), email: lead.businessEmail || '' };
+    return leads.filter(function (other) {
+      if (other.id === lead.id) return false;
+      var theirs = { ig: igHandle(other), li: normalizeUrl(other.linkedinUrl), email: other.businessEmail || '' };
+      return (mine.ig && mine.ig === theirs.ig) ||
+        (mine.li && mine.li === theirs.li) ||
+        (mine.email && mine.email === theirs.email);
+    });
+  }
+
+  // WhatsApp rule from the playbook (Part 06B): first message only when the number is public for business enquiries.
+  function canUseWhatsApp(lead) {
+    if (!lead.whatsappNumber) return { allowed: false, reason: 'No WhatsApp number saved.' };
+    if (!lead.whatsappPublic) {
+      return { allowed: false, reason: 'Number is not marked as a public business enquiry number. Use DM, email or LinkedIn first.' };
+    }
+    return { allowed: true, reason: '' };
+  }
+
+  function dashboardStats(leads, todayKeyValue) {
+    var active = leads.filter(function (l) { return !l.archived; });
+    var stats = {
+      total: active.length,
+      newToday: 0, qualified: 0, replied: 0, won: 0, lost: 0, highPriority: 0,
+      conversionRate: 0, byStatus: {}
+    };
+    STATUSES.forEach(function (s) { stats.byStatus[s] = 0; });
+    active.forEach(function (l) {
+      var st = l.status || 'New';
+      stats.byStatus[st] = (stats.byStatus[st] || 0) + 1;
+      if (dateKeyOf(l.createdAt) === todayKeyValue) stats.newToday++;
+      if (QUALIFIED_OR_LATER.indexOf(st) >= 0) stats.qualified++;
+      if (st === 'Replied') stats.replied++;
+      if (st === 'Won') stats.won++;
+      if (st === 'Lost') stats.lost++;
+      if (scoreLead(l).priority === 'High') stats.highPriority++;
+    });
+    stats.conversionRate = stats.total ? Math.round((stats.won / stats.total) * 1000) / 10 : 0;
+    return stats;
+  }
+
+  function newId() {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+    return 'lead-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+  }
+
+  var api = {
+    STATUSES: STATUSES, NICHES: NICHES, QUALIFIED_OR_LATER: QUALIFIED_OR_LATER,
+    suggestNiche: suggestNiche, scoreLead: scoreLead, normalizeLead: normalizeLead,
+    validateLead: validateLead, findDuplicates: findDuplicates, canUseWhatsApp: canUseWhatsApp,
+    dashboardStats: dashboardStats, dateKeyOf: dateKeyOf, todayKey: todayKey
+  };
+
+  global.MDSCore = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+(function () {
+  'use strict';
+  var C = window.MDSCore;
+  var DB_NAME = 'mds-motion-leads', STORE = 'leads';
+  var db = null, leads = [];
+  var ui = { q: '', status: '', sort: 'newest', archived: false };
+  var nicheTouched = false;
+
+  function $(sel) { return document.querySelector(sel); }
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function toast(msg) {
+    var t = $('#toast');
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { t.hidden = true; }, 2400);
+  }
+  function fmtDate(iso) {
+    if (!iso) return '';
+    return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  function link(u) {
+    if (!u) return '';
+    return /^https?:\/\//i.test(u) ? u : 'https://' + u;
+  }
+  function emptyState(title, text) {
+    return '<div class="empty"><b>' + esc(title) + '</b><p>' + esc(text) + '</p></div>';
+  }
+
+  // ---------- IndexedDB storage ----------
+  function openDB() {
+    return new Promise(function (resolve, reject) {
+      var r = indexedDB.open(DB_NAME, 1);
+      r.onupgradeneeded = function () { r.result.createObjectStore(STORE, { keyPath: 'id' }); };
+      r.onsuccess = function () { resolve(r.result); };
+      r.onerror = function () { reject(r.error); };
+    });
+  }
+  function store(mode) { return db.transaction(STORE, mode).objectStore(STORE); }
+  function reqP(r) {
+    return new Promise(function (resolve, reject) {
+      r.onsuccess = function () { resolve(r.result); };
+      r.onerror = function () { reject(r.error); };
+    });
+  }
+  async function loadLeads() { leads = await reqP(store('readonly').getAll()); }
+  async function putLead(lead) { await reqP(store('readwrite').put(lead)); await loadLeads(); }
+  async function delLead(id) { await reqP(store('readwrite').delete(id)); await loadLeads(); }
+  function leadById(id) { return leads.find(function (l) { return l.id === id; }); }
+
+  // ---------- Navigation ----------
+  function go(name, id) {
+    var main = $('#view');
+    document.querySelectorAll('nav.bottom [data-go]').forEach(function (b) {
+      b.classList.toggle('on', b.dataset.go === name);
+    });
+    if (name === 'home') main.innerHTML = renderHome();
+    else if (name === 'leads') { main.innerHTML = renderLeadsShell(); bindLeads(); renderList(); }
+    else if (name === 'add') { main.innerHTML = renderForm(null); bindForm(null); }
+    else if (name === 'edit') {
+      var e = leadById(id);
+      if (!e) return go('leads');
+      main.innerHTML = renderForm(e); bindForm(e);
+    }
+    else if (name === 'detail') {
+      var l = leadById(id);
+      if (!l) return go('leads');
+      main.innerHTML = renderDetail(l);
+    }
+    window.scrollTo(0, 0);
+  }
+
+  document.addEventListener('click', function (ev) {
+    var a = ev.target.closest('[data-action]');
+    if (a) { handleAction(a.dataset.action, a.dataset.id); return; }
+    var g = ev.target.closest('[data-go]');
+    if (g) go(g.dataset.go, g.dataset.id);
+  });
+
+  document.addEventListener('change', async function (ev) {
+    var el = ev.target;
+    if (el.dataset && el.dataset.action === 'status') {
+      var l = leadById(el.dataset.id);
+      if (!l) return;
+      await putLead(Object.assign({}, l, { status: el.value, updatedAt: new Date().toISOString() }));
+      toast('Status set to ' + el.value);
+      go('detail', l.id);
+    }
+  });
+
+  async function handleAction(action, id) {
+    var l = leadById(id);
+    if (!l) return;
+    if (action === 'archive' || action === 'restore') {
+      await putLead(Object.assign({}, l, { archived: action === 'archive', updatedAt: new Date().toISOString() }));
+      toast(action === 'archive' ? 'Lead archived' : 'Lead restored');
+      go('detail', id);
+    } else if (action === 'delete') {
+      if (!confirm('Permanently delete "' + l.name + '"? This cannot be undone.')) return;
+      await delLead(id);
+      toast('Lead deleted');
+      go('leads');
+    }
+  }
+
+  // ---------- Home / dashboard ----------
+  function renderHome() {
+    var s = C.dashboardStats(leads, C.todayKey());
+    var cards = [
+      ['Total leads', s.total], ['New today', s.newToday],
+      ['Qualified', s.qualified], ['High priority', s.highPriority],
+      ['Replied', s.replied], ['Won clients', s.won],
+      ['Lost leads', s.lost], ['Conversion rate', s.conversionRate + '%']
+    ];
+    var recent = leads.filter(function (l) { return !l.archived; })
+      .sort(function (a, b) { return b.createdAt.localeCompare(a.createdAt); }).slice(0, 5);
+    return '<section class="hero"><h1>Find leads. Build connections. Close clients.</h1>' +
+      '<button class="btn" data-go="add">+ Add lead</button></section>' +
+      '<section class="grid">' + cards.map(function (c) {
+        return '<div class="stat"><span>' + c[0] + '</span><b>' + esc(c[1]) + '</b></div>';
+      }).join('') + '</section>' +
+      '<p class="note">Every number comes from saved leads. Conversion rate = Won ÷ active leads × 100. ' +
+      'Message, follow-up, call and revenue metrics are added in later phases and are not shown until they exist.</p>' +
+      '<h2>Recent leads</h2>' +
+      (recent.length ? recent.map(leadCard).join('') :
+        emptyState('No leads yet', 'Tap + Add lead to save your first lead. The playbook target is 20 new leads a day.'));
+  }
+
+  function leadCard(l) {
+    var sc = C.scoreLead(l);
+    var place = [l.city, l.country].filter(Boolean).join(', ') || 'Location not set';
+    return '<article class="card" data-go="detail" data-id="' + esc(l.id) + '">' +
+      '<div class="row"><b>' + esc(l.name) + '</b><span class="pri ' + sc.priority.toLowerCase() + '">' + sc.priority + '</span></div>' +
+      '<div class="muted">' + esc(l.niche || 'Other') + ' · ' + esc(place) + '</div>' +
+      '<div class="row small"><span class="tag">' + esc(l.status) + '</span><span>' + sc.score + '/100</span></div></article>';
+  }
+
+  // ---------- Leads list ----------
+  function renderLeadsShell() {
+    return '<h2>Leads</h2><div class="filters">' +
+      '<input id="q" type="search" placeholder="Search name, company, city, handle" value="' + esc(ui.q) + '">' +
+      '<div class="row2">' +
+      '<select id="fStatus"><option value="">All statuses</option>' +
+      C.STATUSES.map(function (s) { return '<option ' + (ui.status === s ? 'selected' : '') + '>' + esc(s) + '</option>'; }).join('') +
+      '</select>' +
+      '<select id="fSort">' +
+      [['newest', 'Newest first'], ['score', 'Highest score'], ['name', 'Name A-Z']].map(function (o) {
+        return '<option value="' + o[0] + '" ' + (ui.sort === o[0] ? 'selected' : '') + '>' + o[1] + '</option>';
+      }).join('') +
+      '</select></div>' +
+      '<label class="check"><input type="checkbox" id="fArch" ' + (ui.archived ? 'checked' : '') + '> Show archived</label>' +
+      '</div><div id="list"></div>';
+  }
+  function bindLeads() {
+    $('#q').addEventListener('input', function (e) { ui.q = e.target.value; renderList(); });
+    $('#fStatus').addEventListener('change', function (e) { ui.status = e.target.value; renderList(); });
+    $('#fSort').addEventListener('change', function (e) { ui.sort = e.target.value; renderList(); });
+    $('#fArch').addEventListener('change', function (e) { ui.archived = e.target.checked; renderList(); });
+  }
+  function haystack(l) {
+    return [l.name, l.company, l.city, l.country, l.igUsername, l.linkedinCompany, l.niche].join(' ').toLowerCase();
+  }
+  function filteredLeads() {
+    var q = ui.q.trim().toLowerCase();
+    var out = leads.filter(function (l) {
+      return (ui.archived || !l.archived) &&
+        (!ui.status || l.status === ui.status) &&
+        (!q || haystack(l).indexOf(q) >= 0);
+    });
+    if (ui.sort === 'name') out.sort(function (a, b) { return a.name.localeCompare(b.name); });
+    else if (ui.sort === 'score') out.sort(function (a, b) { return C.scoreLead(b).score - C.scoreLead(a).score; });
+    else out.sort(function (a, b) { return b.createdAt.localeCompare(a.createdAt); });
+    return out;
+  }
+  function renderList() {
+    var list = filteredLeads();
+    $('#list').innerHTML = list.length ? list.map(leadCard).join('') :
+      (leads.length ? emptyState('No matches', 'Try another search or clear the filters.')
+        : emptyState('No leads yet', 'Tap + Add lead to save your first lead.'));
+  }
+
+  // ---------- Add / edit form ----------
+  function inp(name, label, l, type) {
+    var v = l && l[name] != null ? l[name] : '';
+    return '<label>' + esc(label) + '<input name="' + name + '" type="' + (type || 'text') + '" value="' + esc(v) + '"></label>';
+  }
+  function sel(l, key, opts, def) {
+    var cur = (l && l[key] != null) ? l[key] : def;
+    return opts.map(function (o) {
+      return '<option value="' + esc(o[0]) + '" ' + (cur === o[0] ? 'selected' : '') + '>' + esc(o[1]) + '</option>';
+    }).join('');
+  }
+  function renderForm(l) {
+    var found = (l && l.foundOn) || [];
+    var isEdit = !!l;
+    function chk(p) { return found.indexOf(p) >= 0 ? 'checked' : ''; }
+    var nicheOpts = '<option value="">Suggest automatically</option>' +
+      C.NICHES.map(function (n) {
+        return '<option ' + (l && l.niche === n.name ? 'selected' : '') + '>' + esc(n.name) + '</option>';
+      }).join('');
+    var statusOpts = sel(l, 'status', C.STATUSES.map(function (s) { return [s, s]; }), 'New');
+    return '<h2>' + (isEdit ? 'Edit lead' : 'Add lead') + '</h2>' +
+      '<form id="leadForm" novalidate>' +
+      '<fieldset><legend>Basic information</legend>' +
+      inp('name', 'Full name *', l) +
+      inp('company', 'Company / agency', l) +
+      '<div class="row2">' + inp('country', 'Country', l) + inp('city', 'City', l) + '</div>' +
+      '<div class="row2">' + inp('timezone', 'Time zone (e.g. Asia/Dubai)', l) + inp('jobTitle', 'Job title', l) + '</div>' +
+      '<label>Niche <small id="nicheHint" class="muted"></small><select name="niche" id="niche">' + nicheOpts + '</select></label>' +
+      inp('followers', 'Followers (12000 or 12k)', l) +
+      inp('website', 'Website', l, 'url') +
+      '<label>Profile bio / description<textarea name="bio" rows="3">' + esc(l ? l.bio : '') + '</textarea></label>' +
+      inp('keywords', 'Keywords (optional, helps niche detection)', l) +
+      '</fieldset>' +
+      '<fieldset><legend>Where did you find them?</legend><div class="chips">' +
+      '<label class="check"><input type="checkbox" name="foundOn" value="instagram" ' + chk('instagram') + '> Instagram</label>' +
+      '<label class="check"><input type="checkbox" name="foundOn" value="linkedin" ' + chk('linkedin') + '> LinkedIn</label>' +
+      '<label class="check"><input type="checkbox" name="foundOn" value="email" ' + chk('email') + '> Email</label>' +
+      '<label class="check"><input type="checkbox" name="foundOn" value="other" ' + chk('other') + '> Other</label>' +
+      '</div></fieldset>' +
+      '<fieldset id="igSec" ' + (found.indexOf('instagram') >= 0 ? '' : 'hidden') + '><legend>Instagram</legend>' +
+      inp('igUsername', 'Username (without @)', l) + inp('igUrl', 'Profile URL', l, 'url') + '</fieldset>' +
+      '<fieldset id="liSec" ' + (found.indexOf('linkedin') >= 0 ? '' : 'hidden') + '><legend>LinkedIn</legend>' +
+      inp('linkedinUrl', 'Profile URL', l, 'url') + inp('linkedinJobTitle', 'Job title on LinkedIn', l) +
+      inp('linkedinCompany', 'Company on LinkedIn', l) + '</fieldset>' +
+      '<fieldset><legend>Public business contact (all optional)</legend>' +
+      inp('businessEmail', 'Business email', l, 'email') +
+      inp('whatsappNumber', 'WhatsApp number (country code, digits)', l, 'tel') +
+      '<label class="check"><input type="checkbox" name="whatsappPublic" ' + (l && l.whatsappPublic ? 'checked' : '') + '> Number is public for business enquiries</label>' +
+      inp('otherContact', 'Other public business contact', l) +
+      '</fieldset>' +
+      '<fieldset><legend>Qualification</legend><div class="row2">' +
+      '<label>Active in last 30 days<select name="activeLast30">' +
+      sel(l, 'activeLast30', [['yes', 'Yes'], ['no', 'No'], ['unknown', 'Unknown']], 'unknown') + '</select></label>' +
+      '<label>Reels quality<select name="reelsStatus">' +
+      sel(l, 'reelsStatus', [['weak', 'Has reels that need editing'], ['none', 'No reels posted'], ['good', 'Already polished'], ['unknown', 'Unknown']], 'unknown') +
+      '</select></label></div><div class="row2">' +
+      '<label>Real listings visible<select name="hasListings">' +
+      sel(l, 'hasListings', [['yes', 'Yes'], ['no', 'No'], ['unknown', 'Unknown']], 'unknown') + '</select></label>' +
+      '<label class="check"><input type="checkbox" name="isPrivate" ' + (l && l.isPrivate ? 'checked' : '') + '> Private account</label>' +
+      '</div><div id="scorePreview" class="preview"></div></fieldset>' +
+      '<fieldset><legend>Pipeline</legend>' +
+      '<label>Status<select name="status">' + statusOpts + '</select></label>' +
+      inp('nextAction', 'Next action', l) +
+      inp('source', 'Source or referral (optional)', l) +
+      '<label>Notes<textarea name="notes" rows="3">' + esc(l ? l.notes : '') + '</textarea></label>' +
+      '</fieldset>' +
+      '<div id="errors" class="errors" hidden></div>' +
+      '<div class="actions"><button type="button" class="btn ghost" data-go="' + (isEdit ? 'detail' : 'leads') + '" data-id="' + (isEdit ? esc(l.id) : '') + '">Cancel</button>' +
+      '<button class="btn" type="submit">Save lead</button></div></form>';
+  }
+
+  function readForm(form) {
+    var o = { foundOn: [] };
+    Array.prototype.forEach.call(form.elements, function (el) {
+      if (!el.name) return;
+      if (el.type === 'checkbox') {
+        if (el.name === 'foundOn') { if (el.checked) o.foundOn.push(el.value); }
+        else o[el.name] = el.checked;
+      } else {
+        o[el.name] = el.value;
+      }
+    });
+    return o;
+  }
+
+  function bindForm(existing) {
+    var form = $('#leadForm');
+    nicheTouched = !!existing;
+    $('#niche').addEventListener('change', function () { nicheTouched = true; });
+
+    function refresh() {
+      var raw = readForm(form);
+      var found = raw.foundOn;
+      $('#igSec').hidden = found.indexOf('instagram') < 0;
+      $('#liSec').hidden = found.indexOf('linkedin') < 0;
+
+      var sug = C.suggestNiche(raw);
+      if (!nicheTouched) $('#niche').value = sug.niche;
+      $('#nicheHint').textContent = ' Suggested: ' + sug.niche +
+        (sug.matches.length ? ' (matched: ' + sug.matches.join(', ') + ')' : ' (no keyword match)');
+
+      var preview = C.normalizeLead(raw, existing || {});
+      var sc = C.scoreLead(preview);
+      $('#scorePreview').innerHTML = '<b>Score ' + sc.score + '/100 · ' + sc.priority + ' priority</b><ul>' +
+        sc.reasons.map(function (r) {
+          var cls = r.points > 0 ? 'pos' : r.points < 0 ? 'neg' : 'zero';
+          return '<li><span class="' + cls + '">' + (r.points > 0 ? '+' : '') + r.points + '</span> ' + esc(r.text) + '</li>';
+        }).join('') + '</ul>';
+    }
+    form.addEventListener('input', refresh);
+    form.addEventListener('change', refresh);
+    refresh();
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var lead = C.normalizeLead(readForm(form), existing || {});
+      var errs = C.validateLead(lead);
+      var box = $('#errors');
+      if (errs.length) {
+        box.hidden = false;
+        box.innerHTML = errs.map(function (x) { return '<p>' + esc(x) + '</p>'; }).join('');
+        return;
+      }
+      box.hidden = true;
+      var dups = C.findDuplicates(lead, leads);
+      if (dups.length && !confirm('A saved lead already uses this profile or email: ' +
+        dups.map(function (d) { return d.name; }).join(', ') + '. Save anyway?')) return;
+      await putLead(lead);
+      toast(existing ? 'Lead updated' : 'Lead saved');
+      go('detail', lead.id);
+    });
+  }
+
+  // ---------- Lead detail ----------
+  function renderDetail(l) {
+    var sc = C.scoreLead(l);
+    var wa = C.canUseWhatsApp(l);
+    var rows = [
+      ['Company', l.company], ['Location', [l.city, l.country].filter(Boolean).join(', ')],
+      ['Time zone', l.timezone], ['Job title', l.jobTitle],
+      ['Followers', l.followers == null ? '' : l.followers.toLocaleString('en-US')],
+      ['Niche', l.niche + (l.nicheSuggested && l.nicheSuggested !== l.niche ? ' (auto-suggested: ' + l.nicheSuggested + ')' : '')],
+      ['Found on', (l.foundOn || []).join(', ')],
+      ['Instagram', l.igUsername ? '@' + l.igUsername : ''],
+      ['LinkedIn role', [l.linkedinJobTitle, l.linkedinCompany].filter(Boolean).join(' at ')],
+      ['Business email', l.businessEmail],
+      ['WhatsApp', l.whatsappNumber ? l.whatsappNumber + (l.whatsappPublic ? ' (public enquiry)' : ' (not marked public)') : ''],
+      ['Other contact', l.otherContact],
+      ['Source', l.source], ['Next action', l.nextAction],
+      ['Created', fmtDate(l.createdAt)],
+      ['Last contacted', l.lastContactedAt ? fmtDate(l.lastContactedAt) : 'Not yet']
+    ].filter(function (r) { return r[1]; });
+
+    var links = [['Website', l.website], ['Instagram profile', l.igUrl], ['LinkedIn profile', l.linkedinUrl]]
+      .filter(function (r) { return r[1]; })
+      .map(function (r) { return '<div><span class="muted">' + r[0] + ':</span> <a href="' + esc(link(r[1])) + '" target="_blank" rel="noopener">' + esc(r[1]) + '</a></div>'; })
+      .join('');
+
+    return '<div class="row"><button class="btn ghost" data-go="leads">← Leads</button>' +
+      '<button class="btn ghost" data-go="edit" data-id="' + esc(l.id) + '">Edit</button></div>' +
+      '<h2>' + esc(l.name) + '</h2>' +
+      '<div class="row small"><span class="tag">' + esc(l.status) + '</span>' +
+      '<span class="pri ' + sc.priority.toLowerCase() + '">' + sc.priority + ' priority · ' + sc.score + '/100</span></div>' +
+      (l.archived ? '<p class="note">This lead is archived.</p>' : '') +
+      '<fieldset><legend>Status</legend><select data-action="status" data-id="' + esc(l.id) + '">' +
+      C.STATUSES.map(function (s) { return '<option ' + (s === l.status ? 'selected' : '') + '>' + esc(s) + '</option>'; }).join('') +
+      '</select></fieldset>' +
+      '<fieldset><legend>Details</legend><div class="kv">' +
+      rows.map(function (r) { return '<span>' + esc(r[0]) + '</span><div>' + esc(r[1]) + '</div>'; }).join('') +
+      '</div>' + (links ? '<div class="small">' + links + '</div>' : '') + '</fieldset>' +
+      '<fieldset><legend>Lead score: why</legend><ul class="reasons">' +
+      sc.reasons.map(function (r) {
+        var cls = r.points > 0 ? 'pos' : r.points < 0 ? 'neg' : 'zero';
+        return '<li><span class="' + cls + '">' + (r.points > 0 ? '+' : '') + r.points + '</span> ' + esc(r.text) + '</li>';
+      }).join('') + '</ul></fieldset>' +
+      '<fieldset><legend>WhatsApp</legend><p class="muted">' +
+      (wa.allowed ? 'Ready. Click-to-chat opens in Phase 3.' : esc(wa.reason)) + '</p></fieldset>' +
+      '<fieldset><legend>Notes</legend><p>' + (l.notes ? esc(l.notes).replace(/\n/g, '<br>') : '<span class="muted">No notes yet. Edit the lead to add some.</span>') + '</p></fieldset>' +
+      '<fieldset><legend>Messages, follow-ups and replies</legend><p class="muted">Message history, the four-step follow-up sequence and reply tracking are added in Phases 3 and 4.</p></fieldset>' +
+      '<div class="actions">' +
+      (l.archived
+        ? '<button class="btn ghost" data-action="restore" data-id="' + esc(l.id) + '">Restore</button>'
+        : '<button class="btn ghost" data-action="archive" data-id="' + esc(l.id) + '">Archive</button>') +
+      '<button class="btn danger" data-action="delete" data-id="' + esc(l.id) + '">Delete</button></div>';
+  }
+
+  // ---------- Start ----------
+  async function init() {
+    try {
+      db = await openDB();
+      await loadLeads();
+      if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function () {});
+      go('home');
+    } catch (err) {
+      $('#view').innerHTML = emptyState('Storage unavailable',
+        'This browser could not open local storage, so leads cannot be saved. Error: ' + (err && err.message ? err.message : err));
+    }
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
+  }
+  document.addEventListener('DOMContentLoaded', init);
+})();
+
+</script>
+</body>
+</html>
