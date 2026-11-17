@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="description" content="MDS Motion Agency - freelance agency management" />
+<meta name="theme-color" content="#111723" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="MDS Agency" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%23111723'/%3E%3Crect x='64' y='64' width='384' height='384' rx='96' fill='%231A54D9'/%3E%3Cpath d='M200 170 L350 256 L200 342 Z' fill='%23F4F5F6'/%3E%3C/svg%3E" />
+<title>MDS Motion Agency</title>
+<script>
+/* Early theme set: runs before first paint to avoid a flash of the wrong theme. Default is dark. */
+(function () {
+  var mode = 'dark';
+  try { mode = localStorage.getItem('mds-theme-mode') || 'dark'; } catch (e) {}
+  var resolved = mode === 'light' ? 'light'
+    : mode === 'system' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    : 'dark';
+  document.documentElement.setAttribute('data-theme', resolved);
+})();
+</script>
+
+<style>
+/* ==========================================================================
+   2. Design Tokens and CSS Variables
+   Brand palette values are exact. Light theme is a separate, readable palette.
+   Emerald has no approved hex yet: #2FBF71 is a TEMPORARY placeholder.
+   ========================================================================== */
+:root {
+  --brand-deep-navy: #111723;
+  --brand-dark-navy: #1E2837;
+  --brand-slate-navy: #353F51;
+  --brand-muted-slate: #4E5766;
+  --brand-electric-blue: #1A54D9;
+  --brand-soft-pink: #D38CAC;
+  --brand-dusty-purple: #986D8A;
+  --brand-light-pink: #F4D6E5;
+  --brand-off-white: #F4F5F6;
+  --brand-silver-grey: #CACCD1;
+
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --side-expanded: 260px;
+  --side-rail: 84px;
+  --nav-h: 66px;
+  --ease: 180ms ease-out;
+}
+
+/* Dark theme (default) */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #111723;
+  --glow-a: rgba(26, 84, 217, 0.22);
+  --glow-b: rgba(152, 109, 138, 0.18);
+  --surface-solid: #1E2837;
+  --glass: rgba(30, 40, 55, 0.62);
+  --glass-strong: rgba(30, 40, 55, 0.86);
+  --glass-border: rgba(202, 204, 209, 0.14);
+  --field: rgba(17, 23, 35, 0.6);
+  --raised: rgba(53, 63, 81, 0.7);
+  --text: #F4F5F6;
+  --muted: #CACCD1;
+  --subtle: #8A93A3;
+  --primary: #1A54D9;
+  --primary-hover: #2A63E8;
+  --primary-text: #FFFFFF;
+  --primary-soft: rgba(26, 84, 217, 0.2);
+  --pink: #D38CAC;
+  --purple: #986D8A;
+  --highlight: #F4D6E5;
+  --success: #2FBF71;
+  --success-soft: rgba(47, 191, 113, 0.16);
+  --danger: #E5484D;
+  --danger-soft: rgba(229, 72, 77, 0.16);
+  --shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+  --glow: 0 0 22px rgba(26, 84, 217, 0.35);
+}
+
+/* Adaptive light theme (not an inversion; text and borders tuned for contrast) */
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #F4F5F6;
+  --glow-a: rgba(26, 84, 217, 0.08);
+  --glow-b: rgba(211, 140, 172, 0.14);
+  --surface-solid: #FFFFFF;
+  --glass: rgba(255, 255, 255, 0.8);
+  --glass-strong: rgba(255, 255, 255, 0.95);
+  --glass-border: rgba(78, 87, 102, 0.18);
+  --field: #FFFFFF;
+  --raised: #E9EBEE;
+  --text: #111723;
+  --muted: #4E5766;
+  --subtle: #5D6679;
+  --primary: #1A54D9;
+  --primary-hover: #1447B5;
+  --primary-text: #FFFFFF;
+  --primary-soft: rgba(26, 84, 217, 0.1);
+  --pink: #B8668F;
+  --purple: #7A5470;
+  --highlight: #F4D6E5;
+  --success: #1F9D57;
+  --success-soft: rgba(31, 157, 87, 0.12);
+  --danger: #CF2F35;
+  --danger-soft: rgba(207, 47, 53, 0.1);
+  --shadow: 0 8px 24px rgba(17, 23, 35, 0.08);
+  --glow: none;
+}
+
+/* ==========================================================================
+   1. HTML Application Structure (layout styles)
+   ========================================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+/* Soft brand glow behind the whole app (static, cheap to render) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(900px 520px at 8% -8%, var(--glow-a), transparent 60%),
+    radial-gradient(760px 480px at 105% 8%, var(--glow-b), transparent 60%);
+  pointer-events: none;
+}
+h1, h2, h3 { margin: 0; line-height: 1.2; letter-spacing: -0.01em; }
+p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+.app {
+  display: grid;
+  grid-template-columns: 1fr;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Sidebar (tablet rail and desktop) */
+.sidebar {
+  display: none;
+  flex-direction: column;
+  gap: 18px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  padding: 18px 12px;
+  background: var(--glass-strong);
+  border-right: 1px solid var(--glass-border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  overflow: hidden;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+.brand__word { display: flex; flex-direction: column; line-height: 1.1; }
+.brand__word strong { font-size: 0.95rem; letter-spacing: 0.02em; }
+.brand__word span { font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.side-toggle { align-self: flex-end; }
+.side-nav { display: flex; flex-direction: column; gap: 4px; }
+.side-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  color: var(--muted);
+  white-space: nowrap;
+  transition: background var(--ease), color var(--ease);
+}
+.side-link:hover { background: var(--primary-soft); color: var(--text); }
+.side-link[aria-current="page"] { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
+.side-link__label { overflow: hidden; text-overflow: ellipsis; }
+.app.collapsed .side-link__label, .app.collapsed .brand__word { display: none; }
+.app.collapsed .side-link { justify-content: center; }
+.app.collapsed .brand { justify-content: center; padding: 4px 0; }
+.app.collapsed .side-toggle { align-self: center; }
+
+.main {
+  min-width: 0;
+  padding: calc(16px + env(safe-area-inset-top, 0px)) 16px calc(var(--nav-h) + 28px + env(safe-area-inset-bottom, 0px));
+  max-width: 1120px;
+  width: 100%;
+  margin: 0 auto;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.topbar__title { font-size: 1.35rem; font-weight: 700; }
+.topbar__sub { font-size: 0.85rem; color: var(--muted); }
+.page-head { margin-bottom: 20px; }
+.page-head h1 { font-size: 1.6rem; }
+.page-head p { color: var(--muted); margin-top: 4px; }
+
+/* Bottom navigation (phones) */
+.bottomnav {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 40;
+  height: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: center;
+  background: var(--glass-strong);
+  border-top: 1px solid var(--glass-border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.bottomnav__link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 48px;
+  font-size: 0.7rem;
+  color: var(--subtle);
+  text-decoration: none;
+}
+.bottomnav__link[aria-current="page"] { color: var(--primary); font-weight: 600; }
+.bottomnav__add-wrap { display: flex; justify-content: center; }
+.fab {
+  width: 54px; height: 54px;
+  margin-top: -18px;
+  border-radius: 50%;
+  border: none;
+  display: grid;
+  place-items: center;
+  background: var(--primary);
+  color: var(--primary-text);
+  box-shadow: var(--glow);
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   3. Responsive Styles
+   Phone (<640px): bottom bar only. Tablet (640-1023px): icon rail, collapsible.
+   Desktop (>=1024px): full sidebar, collapsible.
+   ========================================================================== */
+@media (min-width: 640px) {
+  .app { grid-template-columns: var(--side-rail) 1fr; }
+  .sidebar { display: flex; }
+  .bottomnav { display: none; }
+  .main { padding: 28px 28px 40px; }
+}
+@media (min-width: 1024px) {
+  .app { grid-template-columns: var(--side-expanded) 1fr; }
+  .app.collapsed { grid-template-columns: var(--side-rail) 1fr; }
+  .main { padding: 36px 40px 56px; }
+}
+
+/* Glass surfaces: blur only on cards, bars and the sheet (Android performance) */
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 1024px) { .grid--3 { grid-template-columns: repeat(3, 1fr); } }
+.card-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--subtle);
+  margin-bottom: 12px;
+}
+.empty {
+  text-align: center;
+  padding: 22px 10px;
+  color: var(--muted);
+}
+.empty strong { display: block; color: var(--text); margin-bottom: 4px; }
+.notice {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: var(--primary-soft);
+  border: 1px solid var(--glass-border);
+  color: var(--muted);
+  font-size: 0.92rem;
+  margin-bottom: 18px;
+}
+.notice strong { color: var(--text); }
+
+/* Segmented control (theme choice) */
+.segmented { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--raised); border: 1px solid var(--glass-border); }
+.segmented button {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 40px; padding: 0 14px;
+  border: none; border-radius: 999px;
+  background: transparent; color: var(--muted);
+  font-weight: 600; font-size: 0.9rem; cursor: pointer;
+}
+.segmented button[aria-pressed="true"] { background: var(--primary); color: var(--primary-text); }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 0 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-weight: 600; font-size: 0.95rem;
+  text-decoration: none; cursor: pointer;
+  transition: background var(--ease), opacity var(--ease), transform var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active:not(:disabled) { transform: scale(0.98); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn--primary { background: var(--primary); color: var(--primary-text); box-shadow: var(--glow); }
+.btn--primary:hover:not(:disabled) { background: var(--primary-hover); }
+.btn--secondary { background: var(--raised); color: var(--text); border-color: var(--glass-border); }
+.btn--icon { width: 44px; padding: 0; background: var(--raised); color: var(--text); border-color: var(--glass-border); }
+.btn--block { width: 100%; }
+
+/* Bottom sheet */
+.sheet-backdrop {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(0, 0, 0, 0.5);
+}
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 61;
+  padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+  background: var(--surface-solid);
+  border: 1px solid var(--glass-border);
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+@media (min-width: 640px) {
+  .sheet { left: 50%; right: auto; bottom: 50%; width: 440px; transform: translate(-50%, 50%); border-radius: var(--radius-lg); }
+}
+.sheet__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.sheet__head h2 { font-size: 1.1rem; }
+.sheet__option {
+  display: flex; flex-direction: column; align-items: flex-start;
+  width: 100%; padding: 12px 14px; margin-bottom: 8px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border);
+  background: var(--field);
+  color: var(--text);
+  text-align: left;
+}
+.sheet__option:disabled { opacity: 0.55; cursor: not-allowed; }
+.sheet__option small { color: var(--subtle); }
+
+/* Reduced motion and transparency preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 1ms !important; animation-duration: 1ms !important; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass, .sidebar, .bottomnav { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--glass-strong); }
+}
+</style>
+</head>
+<body>
+<noscript><p style="padding:24px">MDS Motion Agency needs JavaScript turned on to run.</p></noscript>
+
+<div class="app" id="app">
+  <!-- 1. HTML Application Structure -->
+  <aside class="sidebar" aria-label="Main navigation">
+    <div class="brand">
+      <svg width="34" height="34" viewBox="0 0 512 512" aria-hidden="true" focusable="false">
+        <defs><linearGradient id="mdsg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1A54D9"/><stop offset="1" stop-color="#986D8A"/></linearGradient></defs>
+        <rect x="64" y="64" width="384" height="384" rx="96" fill="url(#mdsg)"/>
+        <path d="M200 170 L350 256 L200 342 Z" fill="#F4F5F6"/>
+        <circle cx="380" cy="132" r="18" fill="#D38CAC"/>
+      </svg>
+      <span class="brand__word"><strong>MDS Motion</strong><span>Agency</span></span>
+    </div>
+    <button type="button" class="btn btn--icon side-toggle" id="side-toggle" aria-label="Collapse or expand sidebar" aria-expanded="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <nav class="side-nav" id="side-nav"></nav>
+  </aside>
+
+  <main class="main" id="main">
+    <header class="topbar">
+      <div>
+        <div class="topbar__title" id="page-title">Home</div>
+        <div class="topbar__sub" id="page-sub">MDS Motion Agency</div>
+      </div>
+    </header>
+    <section id="view" aria-live="polite"></section>
+  </main>
+
+  <nav class="bottomnav" id="bottom-nav" aria-label="Main navigation (phone)"></nav>
+</div>
+
+<div id="sheet-root"></div>
+
+<script type="module">
+/* ==========================================================================
+   Sections in this file, in order (see section comments below):
+   1 HTML Application Structure   (markup above, CSS above)
+   2 Design Tokens                 (CSS above)
+   3 Responsive Styles             (CSS above)
+   4 Authentication                 -> added in Batch 2
+   5 Firebase Configuration         -> added in Batch 2
+   6 Database Services              -> added in Batch 3
+   7 Permission and Security        -> added in Batch 3
+   8 Application State              (below)
+   9 - 16 Module content            (below for Batch 1 placeholders; real logic in later batches)
+   17 Notifications                 -> added in Batch 5
+   18 Admin Controls                -> added in Batch 8
+   19 Event Listeners               (below)
+   20 Application Initialization    (below)
+   ========================================================================== */
+
+/* ---------- Helpers ---------- */
+const $ = (selector, root = document) => root.querySelector(selector);
+
+/* Escape text before putting it into HTML. Required for any user-entered data. */
+function esc(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+/* ---------- Icons (outline, consistent 24px grid) ---------- */
+const ICONS = {
+  home: '<path d="M3 11l9-7 9 7v8a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.3 3.2-5.5 6.5-5.5s5.9 2.2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.7c1.8.7 3 2.6 3 5.3"/>',
+  check: '<rect x="3.5" y="4.5" width="17" height="16" rx="3"/><path d="M8 12.5l2.7 2.7L16 9.8"/>',
+  folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  briefcase: '<rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7"/>',
+  wallet: '<rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/>',
+  more: '<circle cx="5" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="19" cy="12" r="1.3" fill="currentColor"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
+  moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
+  monitor: '<rect x="2.5" y="4" width="19" height="12.5" rx="2.5"/><path d="M8.5 20.5h7M12 16.5v4"/>',
+  close: '<path d="M6 6l12 12M18 6L6 18"/>'
+};
+function icon(name, size = 22) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${ICONS[name] ?? ''}</svg>`;
+}
+
+/* ---------- Reusable markup pieces ---------- */
+function emptyState(title, text) {
+  return `<div class="empty"><strong>${esc(title)}</strong>${esc(text)}</div>`;
+}
+
+/* ==========================================================================
+   8. Application State
+   Batch 1 holds only UI state. No data is stored or invented here.
+   ========================================================================== */
+const NAV = [
+  { id: 'home', label: 'Home', icon: 'home' },
+  { id: 'leads', label: 'Leads', icon: 'users', title: 'Leads', desc: 'Shared lead pool, claims, duplicates and status pipeline.', batch: 'Batch 4' },
+  { id: 'follow-ups', label: 'Follow-ups', icon: 'check', title: 'Follow-ups', desc: 'Reminders, overdue tasks and the daily summary.', batch: 'Batch 5' },
+  { id: 'projects', label: 'Projects', icon: 'folder', title: 'Projects', desc: 'Client projects, editors, revisions, approval and delivery.', batch: 'Batch 6' },
+  { id: 'clients', label: 'Clients', icon: 'briefcase', title: 'Clients', desc: 'Client profiles, pricing models and external file links.', batch: 'Batch 6' },
+  { id: 'finance', label: 'Finance', icon: 'wallet', title: 'Finance', desc: 'Invoices, payments, payouts, expenses and profit.', batch: 'Batch 7' },
+  { id: 'more', label: 'More', icon: 'more' }
+];
+/* Phone bar order required by spec: Home | Leads | Add | Projects | More */
+const PHONE_ORDER = ['home', 'leads', 'add', 'projects', 'more'];
+
+const state = {
+  sheetOpen: false,
+  themeMode: 'dark' // 'dark' | 'light' | 'system'; stored on this device only
+};
+const THEME_KEY = 'mds-theme-mode';
+
+/* ==========================================================================
+   16. Dashboard and Analytics (Batch 1: layout only, empty states)
+   The dashboard shows no numbers, because no data exists yet.
+   ========================================================================== */
+function renderHome() {
+  return `
+    <div class="page-head">
+      <h1>Good to see you</h1>
+      <p>Your work for today appears here.</p>
+    </div>
+    <div class="notice">
+      <div><strong>Sign-in and saving arrive in Batch 2 and Batch 3.</strong>
+      Until then, nothing you do on this page is saved. The cards below are empty by design.</div>
+    </div>
+    <div class="grid grid--3">
+      <section class="glass"><p class="card-title">Today's tasks</p>${emptyState('No tasks yet', 'Tasks appear once projects exist.')}</section>
+      <section class="glass"><p class="card-title">Follow-ups</p>${emptyState('Nothing due', 'Scheduled follow-ups show here.')}</section>
+      <section class="glass"><p class="card-title">Today's leads</p>${emptyState('No leads claimed', 'Leads you claim show here.')}</section>
+      <section class="glass"><p class="card-title">Upcoming deadlines</p>${emptyState('No deadlines', 'Project deadlines show here.')}</section>
+      <section class="glass"><p class="card-title">Recent activity</p>${emptyState('No activity yet', 'Recorded actions show here.')}</section>
+    </div>`;
+}
+
+/* ---------- 17-18: More / Settings (theme now, admin later) ---------- */
+function renderMore() {
+  const btn = (mode, label, ic) => `
+    <button type="button" data-theme-mode="${mode}" aria-pressed="${state.themeMode === mode}">
+      ${icon(ic, 16)}${label}
+    </button>`;
+  return `
+    <div class="page-head">
+      <h1>More</h1>
+      <p>Appearance and app information.</p>
+    </div>
+    <section class="glass" style="margin-bottom:16px">
+      <p class="card-title">Appearance</p>
+      <div class="segmented" role="group" aria-label="Theme mode">
+        ${btn('dark', 'Dark', 'moon')}
+        ${btn('light', 'Light', 'sun')}
+        ${btn('system', 'System', 'monitor')}
+      </div>
+      <p style="margin-top:12px;color:var(--subtle);font-size:0.9rem">Dark is the default. System follows this device's setting.</p>
+    </section>
+    <section class="glass">
+      <p class="card-title">About</p>
+      <p style="color:var(--muted)">MDS Motion Agency - Batch 1 (foundation and UI). Single-file app.</p>
+    </section>`;
+}
+
+/* ---------- 9-15: Module pages (placeholders until their batch) ---------- */
+function renderModule(item) {
+  return `
+    <div class="page-head">
+      <h1>${esc(item.title)}</h1>
+      <p>${esc(item.desc)}</p>
+    </div>
+    <section class="glass">${emptyState(`Coming in ${item.batch}`, 'Not built yet. Nothing here is saved or live.')}</section>`;
+}
+
+const VIEWS = { home: renderHome, more: renderMore };
+
+/* ==========================================================================
+   Navigation rendering (hash routes, so it works on any static host)
+   ========================================================================== */
+function currentRouteId() {
+  const id = location.hash.replace(/^#\/?/, '').trim();
+  return id || 'home';
+}
+
+function renderNav() {
+  const sideNav = $('#side-nav');
+  sideNav.innerHTML = NAV.map((item) => `
+    <a class="side-link" href="#/${item.id}" data-route="${item.id}" title="${esc(item.label)}">
+      ${icon(item.icon)}<span class="side-link__label">${esc(item.label)}</span>
+    </a>`).join('');
+
+  const byId = Object.fromEntries(NAV.map((item) => [item.id, item]));
+  const phoneLinks = PHONE_ORDER.map((id) => {
+    if (id === 'add') {
+      return `<div class="bottomnav__add-wrap"><button type="button" class="fab" id="fab-add" aria-label="Add new">${icon('plus', 26)}</button></div>`;
+    }
+    const item = byId[id];
+    return `<a class="bottomnav__link" href="#/${item.id}" data-route="${item.id}">${icon(item.icon, 22)}<span>${esc(item.label)}</span></a>`;
+  });
+  $('#bottom-nav').innerHTML = phoneLinks.join('');
+}
+
+function render() {
+  const id = currentRouteId();
+  const item = NAV.find((n) => n.id === id);
+  const view = $('#view');
+
+  if (!item) {
+    $('#page-title').textContent = 'Page not found';
+    $('#page-sub').textContent = '';
+    view.innerHTML = `<section class="glass">${emptyState('Page not found', 'This link does not exist. Use the menu to go back.')}</section>`;
+  } else {
+    $('#page-title').textContent = item.label;
+    $('#page-sub').textContent = 'MDS Motion Agency';
+    view.innerHTML = VIEWS[id] ? VIEWS[id]() : renderModule(item);
+  }
+  document.title = item ? `${item.label} - MDS Motion Agency` : 'MDS Motion Agency';
+
+  document.querySelectorAll('[data-route]').forEach((link) => {
+    const active = link.dataset.route === id;
+    if (active) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
+  });
+  window.scrollTo({ top: 0 });
+}
+
+/* ==========================================================================
+   Theme (Dark default, Light, System)
+   ========================================================================== */
+function applyTheme(mode) {
+  state.themeMode = mode;
+  try { localStorage.setItem(THEME_KEY, mode); } catch { /* storage blocked: choice still applies now */ }
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const resolved = mode === 'system' ? (prefersDark ? 'dark' : 'light') : mode;
+  document.documentElement.setAttribute('data-theme', resolved);
+}
+
+/* ==========================================================================
+   Add sheet (opened by the centre + button). Options are disabled until their batch.
+   ========================================================================== */
+const SHEET_OPTIONS = [
+  { label: 'New lead', hint: 'Available in Batch 4' },
+  { label: 'New follow-up', hint: 'Available in Batch 5' },
+  { label: 'New project', hint: 'Available in Batch 6' }
+];
+
+function renderSheet() {
+  const root = $('#sheet-root');
+  if (!state.sheetOpen) { root.innerHTML = ''; return; }
+  root.innerHTML = `
+    <div class="sheet-backdrop" data-close-sheet></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-label="Add new item">
+      <div class="sheet__head">
+        <h2>Add new</h2>
+        <button type="button" class="btn btn--icon" data-close-sheet aria-label="Close">${icon('close')}</button>
+      </div>
+      ${SHEET_OPTIONS.map((o) => `
+        <button type="button" class="sheet__option" disabled>
+          <strong>${esc(o.label)}</strong><small>${esc(o.hint)}</small>
+        </button>`).join('')}
+    </div>`;
+}
+
+function openSheet() { state.sheetOpen = true; renderSheet(); }
+function closeSheet() { state.sheetOpen = false; renderSheet(); }
+
+/* ==========================================================================
+   19. Event Listeners (one set, delegated; no duplicates)
+   ========================================================================== */
+function bindEvents() {
+  window.addEventListener('hashchange', () => { closeSheet(); render(); });
+
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+
+    if (target.closest('#fab-add')) { openSheet(); return; }
+    if (target.closest('[data-close-sheet]')) { closeSheet(); return; }
+
+    const modeButton = target.closest('[data-theme-mode]');
+    if (modeButton) {
+      applyTheme(modeButton.dataset.themeMode);
+      render();
+      return;
+    }
+
+    if (target.closest('#side-toggle')) {
+      const app = $('#app');
+      const collapsed = app.classList.toggle('collapsed');
+      $('#side-toggle').setAttribute('aria-expanded', String(!collapsed));
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && state.sheetOpen) closeSheet();
+  });
+
+  // System mode follows device changes live
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (state.themeMode === 'system') applyTheme('system');
+  });
+}
+
+/* ==========================================================================
+   20. Application Initialization
+   ========================================================================== */
+function init() {
+  let saved = 'dark';
+  try { saved = localStorage.getItem(THEME_KEY) || 'dark'; } catch { /* default */ }
+  applyTheme(['dark', 'light', 'system'].includes(saved) ? saved : 'dark');
+
+  // Tablet (640-1023px) starts with the icon rail; desktop starts expanded.
+  if (!window.matchMedia('(min-width: 1024px)').matches) {
+    $('#app').classList.add('collapsed');
+    $('#side-toggle').setAttribute('aria-expanded', 'false');
+  }
+
+  renderNav();
+  bindEvents();
+  render();
+}
+
+init();
+</script>
+</body>
+</html>
